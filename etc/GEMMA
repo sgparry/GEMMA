@@ -1,0 +1,83 @@
+#
+# /etc/moodle-maint-scripts - configuration for the moodle maintenance scripts
+#
+# Edit this file to suit your local configuration and copy to /etc
+
+# Example directory structure
+# ===========================
+# Directory structure for two moodle instances:
+# http://vle.example.com/mdl-live/ - live instance - database: moodle_live
+# http://vle.example.com/mdl-test/ - test instance - database: moodle_test
+# live was last upgraded on the 1st April 2015. Test has never been upgraded.
+
+# /<${wwwroot}>/
+# 	vle.example.com/
+# 		<${htdocs}>/
+# 			mdl-live/		web files for live moodle
+# 			mdl-live.20150401/	backup of live web files
+# 			mdl-test/		web files for test moodle
+# 
+# /<${dataroot}>/
+# 	vle.example.com/
+# 		mdl-live/
+# 			moodledata	data files for live moodle
+# 		mdl-live.20150401/
+# 			moodledata	data files backup
+# 		mdl-test/
+# 			moodledata	data files for test moodle
+# /<${assetsroot}>/
+# 	vle.example.com/
+# 		mdl-live/
+# 			+all+/		Any assets here are copied into the site
+# 					during the upgrade, replacing _any_ with
+#					same name under the live site directory.
+# 					e.g. a file favicon.ico (favorites icon)
+# 					here will be copied over any favicon.ico
+# 					found anywhere under the site directory
+#
+# 			+path+/		Any directories and files under here are
+# 					copied recursively into the live site
+# 					directory.
+# 		mdl-test/
+# 			+all+/		as above, but for the test site.
+# 			+path+/
+# /<${dbdbackuproot}>/
+# 	moodle_live/
+# 		20150401		mysql database backup for live
+
+
+# As can be seen above, each variable below denotes a root folder.
+# under the root folders are subdirectories either given by the 
+# site base url (domain and path) or a database. In the case of
+# backups these are further qualified by date.
+
+# The root directory of all your apache sites. each site should be a sub-dir:
+wwwroot=/srv/www
+
+# The root directory for all the file based data for your moodle sites
+# each moodle site should have a sub directory tree below this. The names of
+# the directories must match your moodle site path; see above example
+# site is http://example.com/moodle1 then 
+dataroot=/srv/moodle
+
+# The root directory from which custom assets asre copied into the site
+# on upgrade. Can be used to install favorites icons. Sub dirs are site
+# domain and path
+assetsroot=/srv/moodle-custom-assets
+
+# Conventional site sub directory used within Apache for html and php files.
+# Usually "htdocs" or "html"
+htdocs=html
+
+# Root Location of data files for database
+dbfiles=/var/lib/mysql
+
+# Root location of backups of database; subdirs are database names
+dbbackuproot=/var/lib/mysql.backups
+
+# flags to pass to Percona xtrabackup
+xtrabackupflags=
+
+# user apache executes under
+a2user=www-data
+

@@ -1,0 +1,85 @@
+#!/bin/bash
+
+#!header:begin
+# This file is part of GEMMA - http://pyspace.org/GEMMA
+#
+# GEMMA is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# GEMMA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GEMMA.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright (C) 2015 Stephen Parry
+
+# Moodle is a registered trademark of the Moodle Trust.
+# GEMMA is in no way maintained or endorsed by the Moodle Trust.
+
+#!header:end
+
+. /etc/GEMMA
+prefix=$(dirname $(dirname $0))
+. ${prefix}/lib/GEMMA/functions.sh
+if [ "$functions_inc" = "" ]; then
+  exit -1
+fi
+
+check_root
+
+echo ""
+echo "GEMMA MOODLE UPGRADE SCRIPT"
+echo "==========================="
+echo ""
+if [ -z $1 ] || [ -z $2 ]; then
+  echo "usage:"
+  echo "    $(basename $0) (#.#.#|#.#.x) (domain|domain/path)"
+  echo ""
+  echo "where:"
+  echo "    #.#.#   = specific version (e.g. 2.8.3); usually out of date"
+  echo "    #.#.x   = Latest update within 2.8 branch (e.g. 2.8.x); usually recommended"
+  echo "    domain  = domain name of the site e.g. example.com"
+  echo "    path    = path within the site e.g. /lms "
+  echo ""
+  echo "example:"
+  echo ""
+  echo "    $(basename $0) 2.8.x example.org/lms"
+  echo ""
+  echo "Semi-automates the upgrade of a moodle site. The script performs the following steps:"
+  echo "- downloads the new site files."
+  echo "- Backs up site files, data files and database data."
+  echo "- Puts the site in maintenance mode."
+  echo "- Copies in the new site files."
+  echo "- Copies in the existing config."
+  echo "- Copies in predefined custom assets."
+  echo "- Corrects the permissions."
+  echo "- runs the main database upgrade."
+  echo "- Switches off maintenance mode"
+  echo ""
+  exit -1
+fi
+
+parse_version $1
+parse_site_address $2
+set_main_dirs
+print_main_dirs
+check_main_dirs
+set_db_name
+set_backup_dirs
+print_backup_dirs
+check_backup_dirs
+fetch_and_extract_archive
+mdl_endisable_maint_mode enable
+do_backup
+install_site_files
+restore_config
+install_custom_assets
+restore_permissions
+mdl_upgrade
+mdl_endisable_maint_mode disable
+

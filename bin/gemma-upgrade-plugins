@@ -1,0 +1,69 @@
+#!/bin/bash
+
+#!header:begin
+# This file is part of GEMMA - http://pyspace.org/GEMMA
+#
+# GEMMA is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# GEMMA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GEMMA.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright (C) 2015 Stephen Parry
+
+# Moodle is a registered trademark of the Moodle Trust.
+# GEMMA is in no way maintained or endorsed by the Moodle Trust.
+
+#!header:end
+
+. /etc/GEMMA
+prefix=$(dirname $(dirname $0))
+. ${prefix}/lib/GEMMA/functions.sh
+if [ "$functions_inc" = "" ]; then
+  exit -1
+fi
+
+check_root
+
+echo ""
+echo "GEMMA MOODLE UPGRADE PLUGINS SCRIPT"
+echo "==================================="
+echo ""
+if [ -z $1 ]; then
+  echo "usage:"
+  echo "    $(basename $0) (domain|domain/path)"
+  echo ""
+  echo "where:"
+  echo "    domain  = domain name of the site e.g. example.com"
+  echo "    path    = path within the site e.g. /lms "
+  echo ""
+  echo "example:"
+  echo ""
+  echo "    $(basename $0) example.org/lms"
+  echo ""
+  echo "Semi-automates the upgrade of a moodle site. The script performs the following steps:"
+  echo ""
+  exit -1
+fi
+
+parse_site_address $1
+set_main_dirs
+print_main_dirs
+check_main_dirs
+
+mdl_get_update_list
+if [ "$update_list" = "" ]; then
+  echo "All plugins already up-to-date. Finished."
+  exit -1
+fi
+mdl_deploy_updates
+mdl_upgrade
+
+
