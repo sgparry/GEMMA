@@ -33,39 +33,28 @@ fi
 check_root
 
 echo ""
-echo "GEMMA MOODLE UPGRADE SCRIPT"
-echo "==========================="
+echo "GEMMA MOODLE DB BACKUP SCRIPT"
+echo "============================="
 echo ""
-if [ -z $1 ] || [ -z $2 ]; then
+if [ -z $1 ]; then
   echo "usage:"
-  echo "    $(basename $0) (#.#.#|#.#.x) (domain|domain/path)"
+  echo "    $(basename $0) (domain|domain/path)"
   echo ""
   echo "where:"
-  echo "    #.#.#   = specific version (e.g. 2.8.3); usually out of date"
-  echo "    #.#.x   = Latest update within 2.8 branch (e.g. 2.8.x); usually recommended"
   echo "    domain  = domain name of the site e.g. example.com"
   echo "    path    = path within the site e.g. /lms "
   echo ""
   echo "example:"
   echo ""
-  echo "    $(basename $0) 2.8.x example.org/lms"
+  echo "    $(basename $0) example.org/lms"
   echo ""
-  echo "Semi-automates the upgrade of a moodle site. The script performs the following steps:"
-  echo "- downloads the new site files."
-  echo "- Backs up site files, data files and database data."
-  echo "- Puts the site in maintenance mode."
-  echo "- Copies in the new site files."
-  echo "- Copies in the existing config."
-  echo "- Copies in predefined custom assets."
-  echo "- Corrects the permissions."
-  echo "- runs the main database upgrade."
-  echo "- Switches off maintenance mode"
+  echo "Semi-automates the backup of a moodle site database. The script performs the following steps:"
+  echo "- Backs up site database data."
   echo ""
   exit -1
 fi
 
-parse_version $1
-parse_site_address $2
+parse_site_address $1
 set_main_dirs
 print_main_dirs
 check_main_dirs
@@ -75,13 +64,5 @@ set_db_pass
 set_backup_dirs
 print_backup_dirs
 check_backup_dirs
-fetch_and_extract_archive
-mdl_endisable_maint_mode enable
-do_backup
-install_site_files
-restore_config
-install_custom_assets
-restore_permissions
-mdl_upgrade
-mdl_endisable_maint_mode disable
+do_db_backup
 

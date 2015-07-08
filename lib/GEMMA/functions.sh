@@ -65,6 +65,14 @@ function set_db_name() {
   dbname=$(sudo -u $a2user php -r 'define('\''CLI_SCRIPT'\'',true); require('\'${sitedir}/config.php\''); print($CFG->dbname);') || exit -1
 }
 
+function set_db_user() {
+  dbuser=$(sudo -u $a2user php -r 'define('\''CLI_SCRIPT'\'',true); require('\'${sitedir}/config.php\''); print($CFG->dbuser);') || exit -1
+}
+
+function set_db_pass() {
+  dbpass=$(sudo -u $a2user php -r 'define('\''CLI_SCRIPT'\'',true); require('\'${sitedir}/config.php\''); print($CFG->dbpass);') || exit -1
+}
+
 function set_backup_dirs() {
   if [ "$1" = "" ]; then
     backupdate=`date +%Y%m%d`
@@ -207,13 +215,16 @@ function mdl_deploy_updates()
   popd 2>&1 1>/dev/null
 }
 
+function do_db_backup() {
+  echo "Backing up database files"
+  mkdir -p ${dbbakdir}
+  innobackupex --databases=${dbname} --user=${dbuser} --password=${dbpass} ${xtrabackupflags} --backup ${dbbakdir} || exit -1
+}
 
 function do_backup() {
   echo "Backing up data files..."
   cp -rfp ${datadir} ${databakdir} || exit -1
-  echo "Backing up database files"
-  mkdir -p ${dbbakdir}
-  xtrabackup --databases=${dbname} ${xtrabackupflags} --target-dir=${dbbakdir} --backup || exit -1
+  do_db_backup
   echo "Backing up site filles..."
   mv ${sitedir} ${sitebakdir} || exit -1
 }
