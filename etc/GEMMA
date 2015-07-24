@@ -78,6 +78,45 @@ dbbackuproot=/var/lib/mysql.backups
 # flags to pass to Percona xtrabackup
 xtrabackupflags=
 
-# user apache executes under
+# user and group apache executes under
 a2user=www-data
+a2group=www-data
 
+# user and group mysql executes under
+mysqluser=mysql
+mysqlgrp=mysql
+
+# flags for which backup programs to use
+mysqldump=1
+# mysql 5.6 and above only:
+xtrabackup=auto
+
+# Directories where the secure certs and keys are held
+certdir=/etc/ssl/certs
+privkeydir=/etc/ssl/private
+
+# Directory for storing temp (downloaded) files
+tempdir=/tmp
+
+# Site containing apache2 site configs
+a2sitesavaildir=/etc/apache2/sites-available
+
+# Executable for php
+php=/usr/bin/php
+
+# Owner to set for php site files
+siteowner=root:${a2user}
+# Owner to set for moodle data files
+dataowner=root:${a2user}
+
+# Permissions to set for moodle data files - as given to chmod
+datamods="u+rwX,g+rXw,o-rwx"
+
+# Permissions to set for php site files - as given to chmod
+# When unlocked (plugins can be installed)
+sitemodsunlocked="u+rwX,g+rXw,o-rwx"
+# When locked: (site secured)
+sitemodslocked="u+rwX,g+rX-w,o-rwx"
+
+# Setgid for moodle data files?
+datasetgid=0

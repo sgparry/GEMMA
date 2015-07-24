@@ -33,40 +33,29 @@ fi
 check_root
 
 echo ""
-echo "GEMMA MOODLE UPGRADE SCRIPT"
-echo "==========================="
+echo "GEMMA MOODLE BACKUP SCRIPT"
+echo "=========================="
 echo ""
-if [ -z $1 ] || [ -z $2 ]; then
+if [ -z $1 ]; then
 	echo "usage:"
-	echo "    $(basename $0) (#.#.#|#.#.x) (domain|domain/path) [unattended]"
+	echo "    $(basename $0) (domain|domain/path)"
 	echo ""
 	echo "where:"
-	echo "    #.#.#      = specific version (e.g. 2.8.3); usually out of date"
-	echo "    #.#.x      = Latest update within 2.8 branch (e.g. 2.8.x); usually recommended"
-	echo "    domain     = domain name of the site e.g. example.com"
-	echo "    path       = path within the site e.g. /lms "
-	echo "    unattended = no prompts or confirmations"
+	echo "    domain  = domain name of the site e.g. example.com"
+	echo "    path    = path within the site e.g. /lms "
 	echo ""
 	echo "example:"
 	echo ""
-	echo "    $(basename $0) 2.8.x example.org/lms"
+	echo "    $(basename $0) example.org/lms"
 	echo ""
-	echo "Semi-automates the upgrade of a Moodle site. The script performs the following steps:"
-	echo "- downloads the new site files."
+	echo "Semi-automates the backup of a Moodle site."
+	echo "The script performs the following steps:"
 	echo "- Backs up site files, data files and database data."
-	echo "- Puts the site in maintenance mode."
-	echo "- Copies in the new site files."
-	echo "- Copies in the existing config."
-	echo "- Copies in predefined custom assets."
-	echo "- Corrects the permissions."
-	echo "- runs the main database upgrade."
-	echo "- Switches off maintenance mode"
 	echo ""
 	exit -1
 fi
 
-args_parse_version $1
-args_parse_site_address $2
+args_parse_site_address $1
 env_set_main_dirs
 env_print_main_dirs
 fs_check_main_dirs
@@ -77,14 +66,4 @@ env_set_backup_dirs
 env_print_backup_dirs
 fs_check_site_and_data_backup_dirs
 fs_check_db_backup_dir
-fs_fetch_and_extract_archive
-mdl_endisable_maint_mode enable
-gemma_do_backup move
-a2fs_install_site_files
-a2fs_restore_config
-a2fs_install_custom_assets
-fs_correct_permissions unlocked
-mdl_upgrade $3
-fs_correct_permissions locked
-mdl_endisable_maint_mode disable
-
+gemma_do_backup

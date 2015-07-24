@@ -27,7 +27,7 @@
 prefix=$(dirname $(dirname $0))
 . ${prefix}/lib/GEMMA/functions.sh
 if [ "$functions_inc" = "" ]; then
-  exit -1
+	exit -1
 fi
 
 check_root
@@ -37,32 +37,40 @@ echo "GEMMA MOODLE DB BACKUP SCRIPT"
 echo "============================="
 echo ""
 if [ -z $1 ]; then
-  echo "usage:"
-  echo "    $(basename $0) (domain|domain/path)"
-  echo ""
-  echo "where:"
-  echo "    domain  = domain name of the site e.g. example.com"
-  echo "    path    = path within the site e.g. /lms "
-  echo ""
-  echo "example:"
-  echo ""
-  echo "    $(basename $0) example.org/lms"
-  echo ""
-  echo "Semi-automates the backup of a moodle site database. The script performs the following steps:"
-  echo "- Backs up site database data."
-  echo ""
-  exit -1
+	echo "usage:"
+	echo "    $(basename $0) (domain|domain/path)"
+	echo ""
+	echo "where:"
+	echo "    domain  = domain name of the site e.g. example.com"
+	echo "    path    = path within the site e.g. /lms "
+	echo ""
+	echo "example:"
+	echo ""
+	echo "    $(basename $0) example.org/lms"
+	echo ""
+	echo "Semi-automates the backup of a Moodle site database."
+	echo ""
+	echo "The script performs the following steps:"
+	echo "- Backs up site database data using innobackupex and xtrabackup."
+	echo "- Prepares the backup for restore using innobackupex and xtrabackup."
+	echo "and/or"
+	echo "- Backs up the site using mysqldump"
+	echo ""
+	echo "Which approach is used depends on your /etc/GEMMA configuration and which version"
+	echo "of MySQL you are running; 5.6+ is required to use xtrabackup."
+	exit -1
 fi
 
-parse_site_address $1
-set_main_dirs
-print_main_dirs
-check_main_dirs
-set_db_name
-set_db_user
-set_db_pass
-set_backup_dirs
-print_backup_dirs
-check_backup_dirs
-do_db_backup
+args_parse_site_address $1
+env_set_main_dirs
+env_print_main_dirs
+fs_check_main_dirs
+mdl_config_get_db_name
+mdl_extract_db_creds_to_file
+mysql_get_ver
+env_set_backup_dirs
+env_print_backup_dirs
+fs_check_db_backup_dir
+mysql_backup_db
+mysql_prep_backup
 

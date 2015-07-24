@@ -27,7 +27,7 @@
 prefix=$(dirname $(dirname $0))
 . ${prefix}/lib/GEMMA/functions.sh
 if [ "$functions_inc" = "" ]; then
-  exit -1
+	exit -1
 fi
 
 check_root
@@ -37,28 +37,28 @@ echo "GEMMA MOODLE CUSTOM ASSETS SCRIPT"
 echo "================================="
 echo ""
 if [ -z $1 ]; then
-  echo "usage:"
-  echo "    $(basename $0) (domain|domain/path)"
-  echo ""
-  echo "where:"
-  echo "    domain  = domain name of the site e.g. example.com"
-  echo "    path    = path within the site e.g. /lms "
-  echo ""
-  echo "example:"
-  echo ""
-  echo "    $(basename $0) example.org/lms"
-  echo ""
-  echo "Semi-automates the upgrade of a moodle site. The script performs the following steps:"
-  echo "- Copies in predefined custom assets."
-  echo "- Corrects the permissions."
-  echo ""
-  exit -1
+	echo "usage:"
+	echo "    $(basename $0) (domain|domain/path)"
+	echo ""
+	echo "where:"
+	echo "    domain  = domain name of the site e.g. example.com"
+	echo "    path    = path within the site e.g. /lms "
+	echo ""
+	echo "example:"
+	echo ""
+	echo "    $(basename $0) example.org/lms"
+	echo ""
+	echo "Semi-automates the upgrade of a Moodle site. The script performs the following steps:"
+	echo "- Copies in predefined custom assets."
+	echo "- Corrects the permissions."
+	echo ""
+	exit -1
 fi
 
-parse_site_address $1
-set_main_dirs
-print_main_dirs
-check_main_dirs
-install_custom_assets
-restore_permissions
+args_parse_site_address $1
+env_set_main_dirs
+env_print_main_dirs
+fs_check_main_dirs
+a2fs_install_custom_assets
+fs_correct_permissions
 

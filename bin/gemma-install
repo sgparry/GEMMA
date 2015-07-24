@@ -1,0 +1,99 @@
+#!/bin/bash
+
+#!header:begin
+# This file is part of GEMMA - http://pyspace.org/GEMMA
+#
+# GEMMA is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# GEMMA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GEMMA.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright (C) 2015 Stephen Parry
+
+# Moodle is a registered trademark of the Moodle Trust.
+# GEMMA is in no way maintained or endorsed by the Moodle Trust.
+
+#!header:end
+
+. /etc/GEMMA
+prefix=$(dirname $(dirname $0))
+. ${prefix}/lib/GEMMA/functions.sh
+if [ "$functions_inc" = "" ]; then
+	exit -1
+fi
+
+check_root
+
+echo ""
+echo "GEMMA MOODLE INSTALL SCRIPT"
+echo "==========================="
+echo ""
+if [ -z $1 ] || [ -z $2 ]; then
+	echo "usage:"
+	echo "    $(basename $0) (#.#.#|#.#.x) (domain|domain/path) (ssl|nossl)"
+	echo ""
+	echo "where:"
+	echo "    #.#.#   = specific version (e.g. 2.8.3); usually out of date"
+	echo "    #.#.x   = Latest update within 2.8 branch (e.g. 2.8.x); usually recommended"
+	echo "    domain  = domain name of the site e.g. example.com"
+	echo "    path    = path within the site e.g. /lms "
+	echo "    ssl     = apache site will be configured to use ssl (recommended)"
+	echo "    nossl   = apache site will be configured to non-encrypted http"
+	echo ""
+	echo "example:"
+	echo ""
+	echo "    $(basename $0) 2.8.x example.org/lms"
+	echo ""
+	echo "Semi-automates the installation of a Moodle site. The script performs the following steps:"
+	echo "- downloads the new site files."
+	echo "- Copies in the new site files."
+	echo "- Copies in predefined custom assets."
+	echo "- Corrects the permissions."
+	echo "- Creates the empty database named from the site for uniqueness."
+	echo "- Creates the database user named from the site for uniqueness and with a random password."
+	echo "- Creates the empty data directories."
+	echo "- Creates the Apache site config (if needed)."
+	echo "- Adds the directory config to the Apache site."
+	echo "- runs the main Moodle interactive install with all the key parameters pre-filled;"
+	echo "  you just have to supply the site names and admin details."
+	echo "- Checks and enables the Apache config."
+	echo ""
+	echo "Notes:"
+	echo "- SSL cert for site is expected to be named /etc/ssl/certs/example.org.cert"
+	echo "- Any chain cert is expected to be named /etc/ssl/certs/example.org.chain.cert"
+	echo "- private key is expected to be named /etc/ssl/private/example.org.key"
+	exit -1
+fi
+
+args_parse_version $1
+args_parse_site_address $2
+args_parse_ssl_opts $3
+env_set_main_dirs
+env_print_main_dirs
+ui_prompt_db_root_creds_to_file
+mysql_check_root_creds
+env_calc_new_db_names
+a2_create_site_config
+a2fs_create_site_root_dir
+a2fs_create_path_parent_dir
+a2_add_path_dir_config
+mdlfs_create_data_root_dir
+mdlfs_create_data_path_dir
+mysql_create_empty_db
+fs_fetch_and_extract_archive
+a2fs_install_site_files
+a2fs_install_custom_assets
+fs_correct_permissions unlocked
+mdl_install
+fs_correct_permissions locked
+a2_check_site_config
+a2_enable_site_config
+

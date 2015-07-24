@@ -33,31 +33,27 @@ fi
 check_root
 
 echo ""
-echo "GEMMA MOODLE UPGRADE PLUGINS SCRIPT"
+echo "GEMMA MOODLE LOCK SITE FILES SCRIPT"
 echo "==================================="
 echo ""
 if [ -z $1 ]; then
 	echo "usage:"
-	echo "    $(basename $0) (domain|domain/path) [unattended]"
+	echo "    $(basename $0) (domain|domain/path) [lock|unlock]"
 	echo ""
 	echo "where:"
-	echo "    domain     = domain name of the site e.g. example.com"
-	echo "    path       = path within the site e.g. /lms "
-	echo "    unattended = no prompts or confirmations"
+	echo "    domain  = domain name of the site e.g. example.com"
+	echo "    path    = path within the site e.g. /lms "
+	echo "    lock    = prevent write access to site files"
+	echo "    unlock  = allow write access to site files"
 	echo ""
 	echo "example:"
 	echo ""
-	echo "    $(basename $0) example.org/lms"
+	echo "    $(basename $0) example.org/lms lock"
 	echo ""
-	echo "Semi-automates the upgrade of the plugins installed on a Moodle site."
-	echo ""
+	echo "Semi-automates the protection of a Moodle site."
 	echo "The script performs the following steps:"
-	echo "- checks Moodle for a list of available upgrades"
-	echo "- deploys all available upgrades"
-	echo "- runs the core Moodle database upgrade process"
+	echo "- Corrects the permissions."
 	echo ""
-	echo "Note:"
-	echo "  This script does NOT run a backup."
 	exit -1
 fi
 
@@ -65,13 +61,8 @@ args_parse_site_address $1
 env_set_main_dirs
 env_print_main_dirs
 fs_check_main_dirs
-
-mdl_get_plugin_update_list
-if [ "$update_list" = "" ]; then
-	echo "All plugins already up-to-date. Finished."
-	exit -1
+if [ "$3"=="correctall" ]; then
+	fs_correct_permissions $2
+else
+	a2fs_lock_unlock_write_permissions $2
 fi
-fs_correct_permissions unlocked
-mdl_deploy_plugin_updates
-mdl_upgrade $2
-fs_correct_permissions locked
