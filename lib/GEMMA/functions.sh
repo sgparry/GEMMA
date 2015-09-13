@@ -381,7 +381,7 @@ function a2fs_create_site_root_dir()
 		chown root:${a2group} ${wwwroot}/${sitedomain}
 		chmod u+rwX,g+rX-w,o-rwx ${wwwroot}/${sitedomain}
 	fi
-	if [ "${sitepath}" != "" ] && ! [ -d ${wwwroot}/${sitedomain}/${htdocs} ]; then
+	if ! [ -d ${wwwroot}/${sitedomain}/${htdocs} ]; then
 		echo "Creating Apache2 site lower root directory..."
 		mkdir ${wwwroot}/${sitedomain}/${htdocs}
 		chown root:${a2group} ${wwwroot}/${sitedomain}/${htdocs}
@@ -461,7 +461,7 @@ function a2fs_lock_unlock_write_permissions()
 
 function mdlfs_create_data_root_dir()
 {
-	if [ -d ${dataroot}/${sitedomain} ]; then
+	if ! [ -d ${dataroot}/${sitedomain} ]; then
 		echo "Creating Moodle data root directory..."
 		mkdir ${dataroot}/${sitedomain}
 		chown root:${a2group} ${dataroot}/${sitedomain}
