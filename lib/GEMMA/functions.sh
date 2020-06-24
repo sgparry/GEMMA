@@ -59,7 +59,7 @@ function args_parse_version() {
 function args_parse_site_address() {
 	sitedomain=${1%%/*}
 	sitepath=${1#*/}
-	if [ "$sitepath" = "$1" ]; then
+	if [ "$sitepath" == "$1" ]; then
 		sitepath=
 	fi
 }
@@ -76,7 +76,7 @@ function env_set_main_dirs() {
 	sitedir=${wwwroot}/${sitedomain}/${htdocs}
 	datadir=${dataroot}/${sitedomain}
 	assetsdir=${assetsroot}/${sitedomain}
-	if ! [ "${sitepath}" = "" ]; then
+	if ! [ "${sitepath}" == "" ]; then
 		sitedir=${sitedir}/${sitepath}
 		datadir=${datadir}/${sitepath}
 		assetsdir=${assetsdir}/${sitepath}
@@ -84,7 +84,7 @@ function env_set_main_dirs() {
 }
 
 function env_set_backup_dirs() {
-	if [ "$1" = "" ]; then
+	if [ "$1" == "" ]; then
 		backupdate=`date +%Y%m%d`
 	else
 		backupdate=$1
@@ -125,7 +125,7 @@ function env_calc_new_db_names()
 	echo "Generating new database and user names..."
 	if [ "${newdbname}" == "" ]; then
 		newdbname=${sitedomain//./_}
-		if ! [ "${sitepath}" = "" ]; then
+		if ! [ "${sitepath}" == "" ]; then
 			newdbname=${newdbname}_${sitepath//[^A-Za-z0-9_]/}
 		fi
 	fi
@@ -179,7 +179,9 @@ function ui_prompt_db_root_creds_to_file()
 }
 
 function mdl_config_get_db_name() {
+	echo "Getting DB name"
 	dbname=$(sudo -u ${a2user} ${php} -r 'define('\''CLI_SCRIPT'\'',true); require('\'${sitedir}/config.php\''); print($CFG->dbname);')
+	echo Done: ${dbname}
 }
 
 function mdl_extract_db_creds_to_file()
@@ -525,6 +527,7 @@ function fs_check_site_and_data_backup_dirs() {
 		echo "Backup already exists for today; roll back or rename the existing backup before proceeding"
 		exit -1
 	fi
+	[ "${xtrabackup}" == "0" ] ||  hash xtrabackup 2>/dev/null || { echo >&2 "xtrabackup is not installed."; exit 1; }
 }
 
 function fs_check_db_backup_dir() {
@@ -543,7 +546,7 @@ function fs_fetch_and_extract_archive() {
 	mkdir -p ${archivedir}
 	add_trap fs_tmp_cleanup 0
 	[ -e ${archivedir}/${archive} ] && rm ${archivedir}/${archive}
-	wget http://downloads.sourceforge.net/project/moodle/Moodle/stable${baseversion}/${archive} -P ${archivedir}
+	wget https://downloads.sourceforge.net/project/moodle/Moodle/stable${baseversion}/${archive} -P ${archivedir}
 	echo "Extracting files..."
 	(tar xvzf ${archivedir}/${archive} -C ${archivedir} | awk '/^.*\/$/{printf "."}' )
 	rm ${archivedir}/${archive}
@@ -632,6 +635,7 @@ function mysql_backup_db()
 		EOF
 	fi
 	if [ "$mysqldump" != "0" -a "$mysqldump" != "" ]; then
+		mkdir -p ${dbbakdir}
 		mysqldump --defaults-extra-file=${mdl_creds_file} -c -e --single-transaction "${dbname}" > ${dbbakdir}/"${dbname}".FULL.sql
 	fi
 }
