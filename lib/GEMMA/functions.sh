@@ -67,8 +67,23 @@ function args_parse_site_address() {
 function args_parse_ssl_opts() {
 	if [ "$1" == "nossl" ]; then
 		ssl=0
+		return 0
 	elif [ "$1" == "ssl" ]; then
 		ssl=1
+		return 0
+	elif [ "$1" == "le" ]; then
+		ssl=2
+		return 0
+	fi
+	return 1
+}
+
+function args_parse_cleanup_opts() {
+	if [ "$1" == "cleanup" ]; then
+		cleanup=1
+		return 0
+	else
+		return 1
 	fi
 }
 
@@ -179,9 +194,7 @@ function ui_prompt_db_root_creds_to_file()
 }
 
 function mdl_config_get_db_name() {
-	echo "Getting DB name"
 	dbname=$(sudo -u ${a2user} ${php} -r 'define('\''CLI_SCRIPT'\'',true); require('\'${sitedir}/config.php\''); print($CFG->dbname);')
-	echo Done: ${dbname}
 }
 
 function mdl_extract_db_creds_to_file()
@@ -362,7 +375,7 @@ function a2_add_path_dir_config()
 	local port
 	if [ "$ssl" == "0" ]; then
 		port='80'
-	elif [ "$ssl" == "1" ]; then
+	elif [ "$ssl" == "1" -o "$ssl" == "2" ]; then
 		port='443'
 	fi
 	sed -i -f - ${a2sitesavaildir}/${sitedomain}.conf <<-EOF
@@ -421,6 +434,14 @@ function a2fs_install_site_files()
 		rmdir ${sitedir}
 	fi
 	mv ${tempdir}/$$/moodle ${sitedir}/
+}
+
+function a2fs_remove_path_dir()
+{
+	echo "Removing site path directory and files..."
+	if [ "${sitepath}"=="" -a -d "${sitedir}" ]; then
+		rm -rf ${sitedir}
+	fi
 }
 
 function a2fs_restore_config()
@@ -483,6 +504,14 @@ function mdlfs_create_data_path_dir()
 		mkdir -p ${datadir}/moodledata
 		chown root:${a2group} ${datadir}/moodledata
 		chmod u+rXw,g+rXw,o-rwx ${datadir}/moodledata
+	fi
+}
+
+function mdlfs_remove_data_path_dir()
+{
+	if ! [ -d ${datadir} ]; then
+		echo "Removing Moodle data path directory and files..."
+		rm -rf ${datadir}
 	fi
 }
 
@@ -601,16 +630,26 @@ function mysql_check_root_creds()
 function mysql_create_raw_db()
 {
 	local createdbname=$1
-	local sql="CREATE DATABASE /* IF NOT EXISTS */ \`${createdbname}\` CHARACTER SET=utf8 COLLATE=utf8_unicode_ci;"
+	local sql=""
+	if [ "$2"=="1" ]; then
+		sql="DROP DATABASE IF EXISTS \`${createdbname}\`;"
+	fi
+	sql="${sql}CREATE DATABASE \`${createdbname}\` CHARACTER SET=utf8 COLLATE=utf8_unicode_ci;"
 	mysql --defaults-extra-file=${root_creds_file} -e "$sql"
 }
 
 function mysql_create_empty_db()
 {
 	echo "Creating empty database and users..."
-	mysql_create_raw_db ${newdbname}
-	local sql="GRANT RELOAD, REPLICATION CLIENT ON *.* TO '${newdbuser}'@'localhost' IDENTIFIED BY '${newdbpass}', '${newdbuser}'@'127.0.0.1' IDENTIFIED BY '${newdbpass}';\
+	mysql_create_raw_db ${newdbname} $1
+	local sql=""
+	if [ "$1"=="1" ]; then
+		sql="DROP USER IF EXISTS '${newdbuser}'@'localhost', '${newdbuser}'@'127.0.0.1';"
+	fi
+	sql="${sql}CREATE USER '${newdbuser}'@'localhost' IDENTIFIED WITH mysql_native_password BY '${newdbpass}', '${newdbuser}'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '${newdbpass}'; \
+	GRANT RELOAD, REPLICATION CLIENT ON *.* TO '${newdbuser}'@'localhost', '${newdbuser}'@'127.0.0.1';\
 	GRANT ALL PRIVILEGES ON \`${newdbname}\`.* TO '${newdbuser}'@'localhost', '${newdbuser}'@'127.0.0.1' WITH GRANT OPTION"
+	echo "${sql}"
 	mysql --defaults-extra-file=${root_creds_file} -e "$sql"
 }
 

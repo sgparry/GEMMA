@@ -26,7 +26,7 @@
 . /etc/GEMMA
 prefix=$(dirname $(dirname $0))
 . ${prefix}/lib/GEMMA/functions.sh
-if [ "$functions_inc" = "" ]; then
+if [ "$functions_inc" == "" ]; then
 	exit -1
 fi
 
@@ -38,7 +38,7 @@ echo "==========================="
 echo ""
 if [ -z $1 ] || [ -z $2 ]; then
 	echo "usage:"
-	echo "    $(basename $0) (#.#.#|#.#.x) (domain|domain/path) (ssl|nossl)"
+	echo "    $(basename $0) (#.#.#|#.#.x) (domain|domain/path) (ssl|nossl|le) [cleanup]"
 	echo ""
 	echo "where:"
 	echo "    #.#.#   = specific version (e.g. 2.8.3); usually out of date"
@@ -47,6 +47,8 @@ if [ -z $1 ] || [ -z $2 ]; then
 	echo "    path    = path within the site e.g. /lms "
 	echo "    ssl     = apache site will be configured to use ssl (recommended)"
 	echo "    nossl   = apache site will be configured to non-encrypted http"
+	echo "    le      = apache site will be configured to use ssl as provided by letsencrypt"
+	echo "    cleanup = *DANGEROUS* removes previous attempted install"
 	echo ""
 	echo "example:"
 	echo ""
@@ -72,15 +74,29 @@ if [ -z $1 ] || [ -z $2 ]; then
 	echo "- private key is expected to be named /etc/ssl/private/example.org.key"
 	exit -1
 fi
-
+cleanup=0
+ssl=1
+echo "Parsing arguments..."
 args_parse_version $1
 args_parse_site_address $2
-args_parse_ssl_opts $3
+if args_parse_ssl_opts $3; then
+	args_parse_cleanup_opts $4 || true
+else
+	args_parse_cleanup_opts $3 || true
+fi
+echo "SSL option=${ssl}"
+echo "Cleanup option=${cleanup}"
 env_set_main_dirs
 env_print_main_dirs
 ui_prompt_db_root_creds_to_file
 mysql_check_root_creds
 env_calc_new_db_names
+if [ "$cleanup" == "1" ]; then
+	a2fs_remove_path_dir
+fi
+if [ "$cleanup" == "1" ]; then
+	mdlfs_remove_data_path_dir
+fi
 a2_create_site_config
 a2fs_create_site_root_dir
 a2fs_create_path_parent_dir
