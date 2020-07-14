@@ -38,7 +38,7 @@ echo "==========================="
 echo ""
 if [ -z $1 ] || [ -z $2 ]; then
 	echo "usage:"
-	echo "    $(basename $0) (#.#.#|#.#.x) (domain|domain/path) [unattended]"
+	echo "    $(basename $0) (#.#.#|#.#.x) (domain|domain/path) [unattended] [backedup]"
 	echo ""
 	echo "where:"
 	echo "    #.#.#      = specific version (e.g. 2.8.3); usually out of date"
@@ -46,6 +46,7 @@ if [ -z $1 ] || [ -z $2 ]; then
 	echo "    domain     = domain name of the site e.g. example.com"
 	echo "    path       = path within the site e.g. /lms "
 	echo "    unattended = no prompts or confirmations"
+	echo "    backedup   = a successful backup was already done - skip"
 	echo ""
 	echo "example:"
 	echo ""
@@ -75,8 +76,8 @@ mdl_extract_db_creds_to_file
 mysql_get_ver
 env_set_backup_dirs
 env_print_backup_dirs
-fs_check_site_and_data_backup_dirs
-fs_check_db_backup_dir
+fs_check_site_and_data_backup_dirs $3 $4
+fs_check_db_backup_dir $3 $4
 fs_fetch_and_extract_archive
 mdl_endisable_maint_mode enable
 gemma_do_backup move
@@ -84,7 +85,7 @@ a2fs_install_site_files
 a2fs_restore_config
 a2fs_install_custom_assets
 fs_correct_permissions unlocked
-mdl_upgrade $3
+mdl_upgrade $3 $4
 fs_correct_permissions locked
 mdl_endisable_maint_mode disable
 

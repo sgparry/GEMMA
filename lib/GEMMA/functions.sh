@@ -105,7 +105,9 @@ function env_set_backup_dirs() {
 		backupdate=$1
 	fi
 	sitebakdir=${sitedir}.${backupdate}
-	databakdir=${datadir}.${backupdate}
+#	databakdir=${datadir}.${backupdate}
+	sitebakfile=${sitedir}.${backupdate}.tar.bz2
+	databakfile=${datadir}.${backupdate}.tar.bz2
 	if [ "$dbname" != "" ]; then
 		dbbakdir=${dbbackuproot}/${dbname}.${backupdate}
 	fi
@@ -128,7 +130,8 @@ function env_print_backup_dirs() {
 		echo "dbdir      = ${dbdir}"
 	fi
 	echo "sitebakdir = ${sitebakdir}"
-	echo "databakdir = ${databakdir}"
+	echo "sitebakfile = ${sitebakfile}"
+	echo "databakfile = ${databakfile}"
 	if [ "$dbname" != "" ]; then
 		echo "dbbakdir   = ${dbbakdir}"
 	fi
@@ -447,7 +450,11 @@ function a2fs_remove_path_dir()
 function a2fs_restore_config()
 {
 	echo "Re-instating config..."
-	cp -p ${sitebakdir}/config.php ${sitedir}/
+	if [ -e ${sitebakfile} ]; then
+		tar xvfp ${sitebakfile} -C ${sitedir} ./config.php
+	else
+		cp -p ${sitebakdir}/config.php ${sitedir}/
+	fi
 }
 
 function a2fs_install_custom_assets()
@@ -552,17 +559,34 @@ function fs_check_main_dirs() {
 }
 
 function fs_check_site_and_data_backup_dirs() {
-	if [ -e ${sitebakdir} ] || [ -e ${databakdir} ]; then
-		echo "Backup already exists for today; roll back or rename the existing backup before proceeding"
-		exit -1
+	if [ "$1" == "backedup" ] || [ "$2" == "backedup" ]; then
+		if ( [ ! -e ${sitebakfile} ] || [ ! -e ${databakfile} ] ); then
+			echo "No back up found - please re-run without backedup option so back-up can proceed."
+			exit -1
+		elif [ -e ${sitedir} ]; then
+			echo "Site backup and site found - this normal for back-to-back upgrades - but you must manually remove the site directory."
+			exit -1
+		fi
+	else
+		if ( [ -e ${sitebakfile} ] || [ -e ${databakfile} ] ); then
+			echo "Backup already exists for today; roll back or rename the existing backup before proceeding"
+			exit -1
+		fi
 	fi
 	[ "${xtrabackup}" == "0" ] ||  hash xtrabackup 2>/dev/null || { echo >&2 "xtrabackup is not installed."; exit 1; }
 }
 
 function fs_check_db_backup_dir() {
-	if [ -e ${dbbakdir} ]; then
-		echo "Backup already exists for today; roll back or rename the existing backup before proceeding"
-		exit -1
+	if [ "$1" == "backedup" ] || [ "$2" == "backedup" ]; then
+		if [ -e ${dbbakdir} ]; then
+			echo "No back up found - please re-run without backedup option so back-up can proceed."
+			exit -1
+		fi
+	else
+		if [ -e ${dbbakdir} ]; then
+			echo "Backup already exists for today; roll back or rename the existing backup before proceeding"
+			exit -1
+		fi
 	fi
 }
 
@@ -718,14 +742,18 @@ function mysql_restore_db()
 function gemma_do_backup()
 {
 	echo "Backing up data files..."
-	cp -rfp ${datadir} ${databakdir}
+	# cp -rfp ${datadir} ${databakdir}
+	(tar jcvfp ${databakfile} -C ${datadir} . | awk '/^.*\/$/{printf "."}' )
+	echo "done."
 	mysql_backup_db
 	mysql_prep_backup
 	echo "Backing up site files..."
 	if [ "$1"=="move"  ]; then
 		mv ${sitedir} ${sitebakdir}
 	else
-		cp -rf ${sitedir} ${sitebakdir}
+#		cp -rf ${sitedir} ${sitebakdir}
+		(tar jcvfp --remove-files ${sitebakfile} -C ${sitedir} . | awk '/^.*\/$/{printf "."}' )
+		echo "done."
 	fi
 }
 
